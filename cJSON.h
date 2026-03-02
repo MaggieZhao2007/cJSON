@@ -20,9 +20,10 @@
   THE SOFTWARE.
 */
 
+/*头文件保护/依赖*/
 #ifndef cJSON__h
 #define cJSON__h
-
+//判断是否为c++编译，{}内的代码均按c规则编译，与另一组c_plus_plus对应
 #ifdef __cplusplus
 extern "C"
 {
@@ -99,7 +100,8 @@ then using the CJSON_API_VISIBILITY flag to "export" the same symbols the way CJ
 #define cJSON_IsReference 256
 #define cJSON_StringIsConst 512
 
-/* The cJSON structure: */
+
+/*核心数据结构类型定义*/
 typedef struct cJSON
 {
     /* next/prev allow you to walk array/object chains. Alternatively, use GetArraySize/GetArrayItem/GetObjectItem */
