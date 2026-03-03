@@ -53,6 +53,7 @@ then using the CJSON_API_VISIBILITY flag to "export" the same symbols the way CJ
 
 */
 
+//宏定义
 #define CJSON_CDECL __cdecl
 #define CJSON_STDCALL __stdcall
 
@@ -71,8 +72,10 @@ then using the CJSON_API_VISIBILITY flag to "export" the same symbols the way CJ
 #else /* !__WINDOWS__ */
 #define CJSON_CDECL
 #define CJSON_STDCALL
-
+//defined返回bool值，判断是否由gcc编译
 #if (defined(__GNUC__) || defined(__SUNPRO_CC) || defined (__SUNPRO_C)) && defined(CJSON_API_VISIBILITY)
+
+//将public设置为对外可见的调用模块，TYPE表示返回值/参数类型
 #define CJSON_PUBLIC(type)   __attribute__((visibility("default"))) type
 #else
 #define CJSON_PUBLIC(type) type
@@ -80,6 +83,7 @@ then using the CJSON_API_VISIBILITY flag to "export" the same symbols the way CJ
 #endif
 
 /* project version */
+//定义版本号
 #define CJSON_VERSION_MAJOR 1
 #define CJSON_VERSION_MINOR 7
 #define CJSON_VERSION_PATCH 19
@@ -87,6 +91,7 @@ then using the CJSON_API_VISIBILITY flag to "export" the same symbols the way CJ
 #include <stddef.h>
 
 /* cJSON Types: */
+//将几种数据类型赋二进制值，方便之后判断数据类型。
 #define cJSON_Invalid (0)
 #define cJSON_False  (1 << 0)
 #define cJSON_True   (1 << 1)
