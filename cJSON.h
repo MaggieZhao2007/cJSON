@@ -53,10 +53,10 @@ then using the CJSON_API_VISIBILITY flag to "export" the same symbols the way CJ
 
 */
 
-//宏定义
+//宏定义：利用ifdef+endif等进行宏的判断以及封装。
+
 #define CJSON_CDECL __cdecl
 #define CJSON_STDCALL __stdcall
-
 /* export symbols by default, this is necessary for copy pasting the C and header file */
 #if !defined(CJSON_HIDE_SYMBOLS) && !defined(CJSON_IMPORT_SYMBOLS) && !defined(CJSON_EXPORT_SYMBOLS)
 #define CJSON_EXPORT_SYMBOLS
@@ -110,25 +110,29 @@ then using the CJSON_API_VISIBILITY flag to "export" the same symbols the way CJ
 typedef struct cJSON
 {
     /* next/prev allow you to walk array/object chains. Alternatively, use GetArraySize/GetArrayItem/GetObjectItem */
+    //利用指针构建结构体同级之间的双向列表
     struct cJSON *next;
     struct cJSON *prev;
+    /*利用指针child访问子节点。“ cJSON *child_node = root->child;”类似这样。也可以利用while循环等遍历所有元素->Null,然后
+    elem=elem->next/child.且注意：child 仅对 对象 或 数组 类型的节点有效*/
     /* An array or object item will have a child pointer pointing to a chain of the items in the array/object. */
     struct cJSON *child;
-
+    
     /* The type of the item, as above. */
     int type;
 
-    /* The item's string, if type==cJSON_String  and type == cJSON_Raw */
+    /* 定义字符串数据类型 */
     char *valuestring;
-    /* writing to valueint is DEPRECATED, use cJSON_SetNumberValue instead */
+    /* 定义整形数据类型 */
     int valueint;
-    /* The item's number, if type==cJSON_Number */
+    /* 定义浮点数据类型 */
     double valuedouble;
-
-    /* The item's name string, if this item is the child of, or is in the list of subitems of an object. */
+    /* 定义字符数据类型*/
     char *string;
+    /*bool值没有专门的成员来存储，因为只有T/F两种状态，所以直接对type=7/8进行判断即可*/
 } cJSON;
 
+/*定义了两个指向函数的空指针，还没有手动赋值去指向某个具体的函数，一般是在最后赋值*/
 typedef struct cJSON_Hooks
 {
       /* malloc/free are CDECL on Windows regardless of the default calling convention of the compiler, so ensure the hooks allow passing those functions directly. */
@@ -136,6 +140,7 @@ typedef struct cJSON_Hooks
       void (CJSON_CDECL *free_fn)(void *ptr);
 } cJSON_Hooks;
 
+/*自定义bool类型，用于跨平台使用。最初cJSON库诞生的时候，C语言还没有原生的bool值*/
 typedef int cJSON_bool;
 
 /* Limits how deeply nested arrays/objects can be before cJSON rejects to parse them.
@@ -299,7 +304,7 @@ CJSON_PUBLIC(char*) cJSON_SetValuestring(cJSON *object, const char *valuestring)
     cJSON_Invalid\
 )
 
-/* Macro for iterating over an array or object */
+/* 定义了遍历数组的算法：封装使得不必重复写next和child;并且宏的替换，是插入文本流，比函数成本小*/
 #define cJSON_ArrayForEach(element, array) for(element = (array != NULL) ? (array)->child : NULL; element != NULL; element = element->next)
 
 /* malloc/free objects using the malloc/free functions that have been set with cJSON_InitHooks */
