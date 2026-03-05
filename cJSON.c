@@ -69,7 +69,7 @@
 #endif
 #define false ((cJSON_bool)0)
 
-/* define isnan and isinf for ANSI C, if in C99 or above, isnan and isinf has been defined in math.h */
+/* 手动加入判断浮点数是否为“无穷大”/“非数字”的功能*/
 #ifndef isinf
 #define isinf(d) (isnan((d - d)) && !isnan(d))
 #endif
@@ -96,6 +96,7 @@ CJSON_PUBLIC(const char *) cJSON_GetErrorPtr(void)
     return (const char*) (global_error.json + global_error.position);
 }
 
+//get系列函数，读取值
 CJSON_PUBLIC(char *) cJSON_GetStringValue(const cJSON * const item)
 {
     if (!cJSON_IsString(item))
@@ -103,7 +104,7 @@ CJSON_PUBLIC(char *) cJSON_GetStringValue(const cJSON * const item)
         return NULL;
     }
 
-    return item->valuestring;
+    return item->valuestring;//通过指针移动，从解析好的节点去读取它的值。且仅仅是字符串类型。
 }
 
 CJSON_PUBLIC(double) cJSON_GetNumberValue(const cJSON * const item)

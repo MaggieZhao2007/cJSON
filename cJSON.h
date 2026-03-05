@@ -140,7 +140,7 @@ typedef struct cJSON_Hooks
       void (CJSON_CDECL *free_fn)(void *ptr);
 } cJSON_Hooks;
 
-/*自定义bool类型，用于跨平台使用。最初cJSON库诞生的时候，C语言还没有原生的bool值*/
+/*自定义bool类型为type 0/1，用于跨平台使用。最初cJSON库诞生的时候，C语言还没有原生的bool值*/
 typedef int cJSON_bool;
 
 /* Limits how deeply nested arrays/objects can be before cJSON rejects to parse them.
@@ -155,12 +155,14 @@ typedef int cJSON_bool;
 #define CJSON_CIRCULAR_LIMIT 10000
 #endif
 
-/* returns the version of cJSON as a string */
+/* 版本号返回为字符，类似：1.15.17 */
 CJSON_PUBLIC(const char*) cJSON_Version(void);
 
-/* Supply malloc, realloc and free functions to cJSON */
+/* CJSON_PUBLIC为cJSON定义的导出函数，通过 cJSON_InitHooks来替换默认内存函数*/
 CJSON_PUBLIC(void) cJSON_InitHooks(cJSON_Hooks* hooks);
 
+
+/*解析字符串函数，返回一个cJSON节点*/
 /* Memory Management: the caller is always responsible to free the results from all variants of cJSON_Parse (with cJSON_Delete) and cJSON_Print (with stdlib free, cJSON_Hooks.free_fn, or cJSON_free as appropriate). The exception is cJSON_PrintPreallocated, where the caller has full responsibility of the buffer. */
 /* Supply a block of JSON, and this returns a cJSON object you can interrogate. */
 CJSON_PUBLIC(cJSON *) cJSON_Parse(const char *value);
@@ -170,7 +172,7 @@ CJSON_PUBLIC(cJSON *) cJSON_ParseWithLength(const char *value, size_t buffer_len
 CJSON_PUBLIC(cJSON *) cJSON_ParseWithOpts(const char *value, const char **return_parse_end, cJSON_bool require_null_terminated);
 CJSON_PUBLIC(cJSON *) cJSON_ParseWithLengthOpts(const char *value, size_t buffer_length, const char **return_parse_end, cJSON_bool require_null_terminated);
 
-/* Render a cJSON entity to text for transfer/storage. */
+/* cJSON树->字符，打印函数 */
 CJSON_PUBLIC(char *) cJSON_Print(const cJSON *item);
 /* Render a cJSON entity to text for transfer/storage without any formatting. */
 CJSON_PUBLIC(char *) cJSON_PrintUnformatted(const cJSON *item);
@@ -182,7 +184,7 @@ CJSON_PUBLIC(cJSON_bool) cJSON_PrintPreallocated(cJSON *item, char *buffer, cons
 /* Delete a cJSON entity and all subentities. */
 CJSON_PUBLIC(void) cJSON_Delete(cJSON *item);
 
-/* Returns the number of items in an array (or object). */
+/* get系列函数，用于找到某个对象以及它的值，或者是获取一个长度 */
 CJSON_PUBLIC(int) cJSON_GetArraySize(const cJSON *array);
 /* Retrieve item number "index" from array "array". Returns NULL if unsuccessful. */
 CJSON_PUBLIC(cJSON *) cJSON_GetArrayItem(const cJSON *array, int index);
@@ -197,7 +199,7 @@ CJSON_PUBLIC(const char *) cJSON_GetErrorPtr(void);
 CJSON_PUBLIC(char *) cJSON_GetStringValue(const cJSON * const item);
 CJSON_PUBLIC(double) cJSON_GetNumberValue(const cJSON * const item);
 
-/* These functions check the type of an item */
+/* 检查数据类型 */
 CJSON_PUBLIC(cJSON_bool) cJSON_IsInvalid(const cJSON * const item);
 CJSON_PUBLIC(cJSON_bool) cJSON_IsFalse(const cJSON * const item);
 CJSON_PUBLIC(cJSON_bool) cJSON_IsTrue(const cJSON * const item);
@@ -210,6 +212,7 @@ CJSON_PUBLIC(cJSON_bool) cJSON_IsObject(const cJSON * const item);
 CJSON_PUBLIC(cJSON_bool) cJSON_IsRaw(const cJSON * const item);
 
 /* These calls create a cJSON item of the appropriate type. */
+//创造cJSON对象、数字等
 CJSON_PUBLIC(cJSON *) cJSON_CreateNull(void);
 CJSON_PUBLIC(cJSON *) cJSON_CreateTrue(void);
 CJSON_PUBLIC(cJSON *) cJSON_CreateFalse(void);
@@ -236,7 +239,7 @@ CJSON_PUBLIC(cJSON *) cJSON_CreateFloatArray(const float *numbers, int count);
 CJSON_PUBLIC(cJSON *) cJSON_CreateDoubleArray(const double *numbers, int count);
 CJSON_PUBLIC(cJSON *) cJSON_CreateStringArray(const char *const *strings, int count);
 
-/* Append item to the specified array/object. */
+/* 修改cJSON树：增添、删除、替换*/
 CJSON_PUBLIC(cJSON_bool) cJSON_AddItemToArray(cJSON *array, cJSON *item);
 CJSON_PUBLIC(cJSON_bool) cJSON_AddItemToObject(cJSON *object, const char *string, cJSON *item);
 /* Use this when string is definitely const (i.e. a literal, or as good as), and will definitely survive the cJSON object.
