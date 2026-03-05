@@ -114,7 +114,7 @@ CJSON_PUBLIC(double) cJSON_GetNumberValue(const cJSON * const item)
         return (double) NAN;
     }
 
-    return item->valuedouble;
+    return item->valuedouble;//同上
 }
 
 /* This is a safeguard to prevent copy-pasters from using incompatible C and header files */
