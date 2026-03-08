@@ -439,13 +439,13 @@ CJSON_PUBLIC(double) cJSON_SetNumberHelper(cJSON *object, double number)
     return object->valuedouble = number;
 }
 
-/* Note: when passing a NULL valuestring, cJSON_SetValuestring treats this as an error and return NULL */
+/* 安全修改字符串取值 */
 CJSON_PUBLIC(char*) cJSON_SetValuestring(cJSON *object, const char *valuestring)
 {
     char *copy = NULL;
     size_t v1_len;
     size_t v2_len;
-    /* if object's type is not cJSON_String or is cJSON_IsReference, it should not set valuestring */
+    /* 判断是否为字符串 */
     if ((object == NULL) || !(object->type & cJSON_String) || (object->type & cJSON_IsReference))
     {
         return NULL;
@@ -459,14 +459,14 @@ CJSON_PUBLIC(char*) cJSON_SetValuestring(cJSON *object, const char *valuestring)
     v1_len = strlen(valuestring);
     v2_len = strlen(object->valuestring);
 
-    if (v1_len <= v2_len)
+    if (v1_len <= v2_len)//优先处理短字符串，可以不用重新分配内存，直接放到原内存格里
     {
         /* strcpy does not handle overlapping string: [X1, X2] [Y1, Y2] => X2 < Y1 or Y2 < X1 */
         if (!( valuestring + v1_len < object->valuestring || object->valuestring + v2_len < valuestring ))
         {
             return NULL;
         }
-        strcpy(object->valuestring, valuestring);
+        strcpy(object->valuestring, valuestring);//复制新的值到地址里
         return object->valuestring;
     }
     copy = (char*) cJSON_strdup((const unsigned char*)valuestring, &global_hooks);
@@ -476,17 +476,17 @@ CJSON_PUBLIC(char*) cJSON_SetValuestring(cJSON *object, const char *valuestring)
     }
     if (object->valuestring != NULL)
     {
-        cJSON_free(object->valuestring);
+        cJSON_free(object->valuestring);//若为更长的字符串，则清空原内存，并（自动）重新分配内存。
     }
     object->valuestring = copy;
 
     return copy;
 }
 
-typedef struct
+typedef struct //用于输出JSON数据的缓冲区
 {
     unsigned char *buffer;
-    size_t length;
+    size_t length; //缓冲区的最大长度：一般是手动规划&动态调整的：比如一开始给个256字节的长度
     size_t offset;
     size_t depth; /* current nesting depth (for formatted printing) */
     cJSON_bool noalloc;
@@ -495,17 +495,17 @@ typedef struct
 } printbuffer;
 
 /* realloc printbuffer if necessary to have at least "needed" bytes more */
-static unsigned char* ensure(printbuffer * const p, size_t needed)
+static unsigned char* ensure(printbuffer * const p, size_t needed) //保证缓冲区有足够的空间写入数据，且为内部函数
 {
     unsigned char *newbuffer = NULL;
     size_t newsize = 0;
 
-    if ((p == NULL) || (p->buffer == NULL))
+    if ((p == NULL) || (p->buffer == NULL)) //首先确保buffer指针不为空，即是否有有效的缓冲区
     {
         return NULL;
     }
 
-    if ((p->length > 0) && (p->offset >= p->length))
+    if ((p->length > 0) && (p->offset >= p->length)) //确保偏移量没有超过缓冲区的最大长度
     {
         /* make sure that offset is valid */
         return NULL;
@@ -527,8 +527,8 @@ static unsigned char* ensure(printbuffer * const p, size_t needed)
         return NULL;
     }
 
-    /* calculate new buffer size */
-    if (needed > (INT_MAX / 2))
+    /* 扩容操作：1、直接扩到最大字节数 2、乘2扩容 */
+    if (needed > (INT_MAX / 2)) //ps:int_max:2的31次方-1=2147413647
     {
         /* overflow of int, use INT_MAX if possible */
         if (needed <= INT_MAX)
@@ -545,7 +545,7 @@ static unsigned char* ensure(printbuffer * const p, size_t needed)
         newsize = needed * 2;
     }
 
-    if (p->hooks.reallocate != NULL)
+    if (p->hooks.reallocate != NULL) //判断是否使用了内置的"重新分配内存函数"
     {
         /* reallocate with realloc if available */
         newbuffer = (unsigned char*)p->hooks.reallocate(p->buffer, newsize);
@@ -561,23 +561,23 @@ static unsigned char* ensure(printbuffer * const p, size_t needed)
     else
     {
         /* otherwise reallocate manually */
-        newbuffer = (unsigned char*)p->hooks.allocate(newsize);
+        newbuffer = (unsigned char*)p->hooks.allocate(newsize); //如果未使用内置函数，则手动重置缓冲区
         if (!newbuffer)
         {
-            p->hooks.deallocate(p->buffer);
+            p->hooks.deallocate(p->buffer);//释放旧内存
             p->length = 0;
             p->buffer = NULL;
 
             return NULL;
         }
 
-        memcpy(newbuffer, p->buffer, p->offset + 1);
+        memcpy(newbuffer, p->buffer, p->offset + 1); //然后将旧缓冲区的字符拷贝到新的缓冲区中。
         p->hooks.deallocate(p->buffer);
     }
     p->length = newsize;
     p->buffer = newbuffer;
 
-    return newbuffer + p->offset;
+    return newbuffer + p->offset; //移动游标
 }
 
 /* calculate the new length of the string in a printbuffer and update the offset */
