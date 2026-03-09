@@ -398,7 +398,7 @@ loop_end:
 
     item->valuedouble = number;
 
-    /* 判断是否超出int值的限度 */
+    /* 判断是否超出int值的限度：太过于大或者小，都取区间；若合适，则建立数字类型并取值 */
     if (number >= INT_MAX)
     {
         item->valueint = INT_MAX;
@@ -409,7 +409,7 @@ loop_end:
     }
     else
     {
-        item->valueint = (int)number;
+        item->valueint = (int)number; //
     }
 
     item->type = cJSON_Number;
@@ -604,10 +604,10 @@ static cJSON_bool compare_double(double a, double b)
 static cJSON_bool print_number(const cJSON * const item, printbuffer * const output_buffer)
 {
     unsigned char *output_pointer = NULL;
-    double d = item->valuedouble;
+    double d = item->valuedouble;//指向要输出的数字
     int length = 0;
     size_t i = 0;
-    unsigned char number_buffer[26] = {0}; /* temporary buffer to print the number into */
+    unsigned char number_buffer[26] = {0}; /* 初始化打印缓冲区 */
     unsigned char decimal_point = get_decimal_point();
     double test = 0.0;
 
@@ -616,25 +616,25 @@ static cJSON_bool print_number(const cJSON * const item, printbuffer * const out
         return false;
     }
 
-    /* This checks for NaN and Infinity */
+    /* 特殊值：无穷大处理 */
     if (isnan(d) || isinf(d))
     {
         length = sprintf((char*)number_buffer, "null");
     }
-    else if(d == (double)item->valueint)
+    else if(d == (double)item->valueint) //整数判断
     {
-        length = sprintf((char*)number_buffer, "%d", item->valueint);
+        length = sprintf((char*)number_buffer, "%d", item->valueint); //格式化：用%d强制输出为整数
     }
     else
     {
         /* Try 15 decimal places of precision to avoid nonsignificant nonzero digits */
-        length = sprintf((char*)number_buffer, "%1.15g", d);
+        length = sprintf((char*)number_buffer, "%1.15g", d); //假如是浮点数：最多保留15位有效数字
 
         /* Check whether the original double can be recovered */
         if ((sscanf((char*)number_buffer, "%lg", &test) != 1) || !compare_double((double)test, d))
         {
             /* If not, print with 17 decimal places of precision */
-            length = sprintf((char*)number_buffer, "%1.17g", d);
+            length = sprintf((char*)number_buffer, "%1.17g", d); //假如还原失败，则改用17位有效数字
         }
     }
 
@@ -645,7 +645,7 @@ static cJSON_bool print_number(const cJSON * const item, printbuffer * const out
     }
 
     /* reserve appropriate space in the output */
-    output_pointer = ensure(output_buffer, (size_t)length + sizeof(""));
+    output_pointer = ensure(output_buffer, (size_t)length + sizeof("")); //确保缓冲区有足够的空间，+1是为了给结束符留空间
     if (output_pointer == NULL)
     {
         return false;
@@ -670,7 +670,7 @@ static cJSON_bool print_number(const cJSON * const item, printbuffer * const out
     return true;
 }
 
-/* parse 4 digit hexadecimal number */
+/* 解析 JSON 中的十六进制值 */
 static unsigned parse_hex4(const unsigned char * const input)
 {
     unsigned int h = 0;
@@ -679,15 +679,15 @@ static unsigned parse_hex4(const unsigned char * const input)
     for (i = 0; i < 4; i++)
     {
         /* parse digit */
-        if ((input[i] >= '0') && (input[i] <= '9'))
+        if ((input[i] >= '0') && (input[i] <= '9'))//第一类0-9
         {
             h += (unsigned int) input[i] - '0';
         }
-        else if ((input[i] >= 'A') && (input[i] <= 'F'))
+        else if ((input[i] >= 'A') && (input[i] <= 'F'))//第二类：A-F
         {
             h += (unsigned int) 10 + input[i] - 'A';
         }
-        else if ((input[i] >= 'a') && (input[i] <= 'f'))
+        else if ((input[i] >= 'a') && (input[i] <= 'f')) //第三类：a-f
         {
             h += (unsigned int) 10 + input[i] - 'a';
         }
@@ -707,7 +707,7 @@ static unsigned parse_hex4(const unsigned char * const input)
 }
 
 /* converts a UTF-16 literal to UTF-8
- * A literal can be one or two sequences of the form \uXXXX */
+ * 处理UTF-16 转义字符,转换为 UTF-8 编码，不详细注释了？感觉不是很核心（笑哭）*/
 static unsigned char utf16_literal_to_utf8(const unsigned char * const input_pointer, const unsigned char * const input_end, unsigned char **output_pointer)
 {
     long unsigned int codepoint = 0;
