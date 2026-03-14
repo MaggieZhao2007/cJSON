@@ -3067,12 +3067,53 @@ CJSON_PUBLIC(cJSON_bool) cJSON_IsRaw(const cJSON * const item)
     return (item->type & 0xFF) == cJSON_Raw;
 }
 
+
+/*拓展功能：新增“一键删除”函数*/
+int cJSON_SetValue(cJSON *node, cJSON_ValueType type, const void *value) {
+
+    if (node == NULL || value == NULL) {
+        return -1;
+    }
+
+    // 根据类型修改
+    switch (type) {
+        case VAL_STRING: {
+            if (node->valuestring != NULL) {
+                free(node->valuestring);
+            }
+            node->valuestring = strdup((const char*)value);
+            node->type = cJSON_String;
+            break;
+        }
+        case VAL_NUMBER: {
+            node->valuedouble = *(const double*)value;
+            node->valueint = (int)*(const double*)value;
+            node->type = cJSON_Number;
+            break;
+        }
+        case VAL_BOOL: {
+            int bool_val = *(const int*)value;
+            node->type = bool_val ? cJSON_True : cJSON_False;
+            break;
+        }
+        case VAL_NULL: {
+            node->type = cJSON_NULL;
+            break;
+        }
+        default:
+            return -1;
+    }
+    return 0;
+}
+
 CJSON_PUBLIC(cJSON_bool) cJSON_Compare(const cJSON * const a, const cJSON * const b, const cJSON_bool case_sensitive)
 {
     if ((a == NULL) || (b == NULL) || ((a->type & 0xFF) != (b->type & 0xFF)))
     {
         return false;
     }
+
+
 
     /* check if type is valid */
     switch (a->type & 0xFF)
