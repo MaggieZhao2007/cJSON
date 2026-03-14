@@ -140,6 +140,14 @@ typedef struct cJSON_Hooks
       void (CJSON_CDECL *free_fn)(void *ptr);
 } cJSON_Hooks;
 
+/*新增函数：配套的enum列举声明*/
+typedef enum {
+    VAL_STRING,
+    VAL_NUMBER,
+    VAL_BOOL,
+    VAL_NULL
+} cJSON_ValueType;
+
 /*自定义bool类型为type 0/1，用于跨平台使用。最初cJSON库诞生的时候，C语言还没有原生的bool值*/
 typedef int cJSON_bool;
 
@@ -299,6 +307,10 @@ CJSON_PUBLIC(double) cJSON_SetNumberHelper(cJSON *object, double number);
 #define cJSON_SetNumberValue(object, number) ((object != NULL) ? cJSON_SetNumberHelper(object, (double)number) : (number))
 /* Change the valuestring of a cJSON_String object, only takes effect when type of object is cJSON_String */
 CJSON_PUBLIC(char*) cJSON_SetValuestring(cJSON *object, const char *valuestring);
+
+
+/*新增拓展功能：函数声明*/
+extern int cJSON_SetValue(cJSON *node, cJSON_ValueType type, const void *value);
 
 /* If the object is not a boolean type this does nothing and returns cJSON_Invalid else it returns the new type*/
 #define cJSON_SetBoolValue(object, boolValue) ( \
